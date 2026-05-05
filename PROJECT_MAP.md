@@ -87,7 +87,7 @@ SLIMER/GenQA 样本
 - `README.md`：项目简介、基本目录结构、环境安装和训练/合并/评估常用命令。
 - `PROJECT_MAP.md`：本项目地图，说明目录结构、数据流、关键入口和维护注意事项。
 - `requirements.txt`：运行依赖，包括 `torch`、`transformers`、`peft`、`vllm`、`huggingface-hub`、`datasets`、`numpy`。
-- `.gitignore`：当前只忽略 `.DS_Store`、`.idea`、`.env`、`/venv/`。
+- `.gitignore`：忽略本地环境文件、IDE 文件和生成的 `*.jsonl` 实验/数据产物。
 - `LICENSE`：Apache 2.0。
 
 本项目没有 `setup.py` 或 `pyproject.toml`，脚本通常假设从仓库根目录运行，并设置 `PYTHONPATH` 为项目根目录。
@@ -480,6 +480,8 @@ handler = MyDataset(
 - `saved_models/`：部分 helper 的默认示例路径。
 - `data/pileNER/<dataset_name>/`：训练脚本按参数生成的 JSONL 子集。
 - `data/pileNER/pileNER_391_all.jsonl`：本地 PileNER conversation 文件转换出的无切分 391 类全集，不包含 `instruction` 字段。
+
+所有 `*.jsonl` 文件视为生成数据或实验产物，默认不纳入 git 跟踪；需要共享时应通过外部数据存储或明确约定的发布流程处理。
 
 `trained_models/` 和 `merged_models/` 是项目既有输出目录；后续实验继续沿用这两个路径。
 
