@@ -164,7 +164,7 @@ python src/SFT_finetuning/evaluating/evaluate_vLLM.py ..\model\Llama-3.1-8B-Inst
 常见输出目录：
 
 - `data/pileNER/{dataset_name}/`：训练脚本生成的 JSONL 数据。
-- `data/pileNER/pileNER_391_all.jsonl`：无切分 391 类 PileNER JSONL，字段为 `doc_tag_pairID`、`tagName`、`input`、`output`，不包含 `instruction`。
+- `data/pileNER/pileNER_391_all.jsonl`：无切分 391 类 PileNER JSONL，字段为 `doc_tag_pairID`、`tagName`、`input`、`output`，不包含 `instruction`；生成时会跳过含非 ASCII 字符的样本，保证输出只含英文类字符。
 - 所有 `*.jsonl` 文件视为生成数据或实验产物，默认不纳入 git 跟踪；需要共享时应通过外部数据存储或明确约定的发布流程处理。
 - `trained_models/`：LoRA adapter。
 - `merged_models/`：合并后的模型。

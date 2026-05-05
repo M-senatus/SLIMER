@@ -323,17 +323,46 @@ def normalize_and_filter_ne_types(samples, min_occurrences):
     return normalized_samples, frequent_ne_types
 
 
-def format_genqa_without_instruction(sample):
+def get_ordered_unique_answer_texts(sample):
     answers = sample["answers"]
     sorted_answers = sorted(zip(answers["answer_start"], answers["text"]), key=lambda item: item[0])
     answer_texts = [text for _, text in sorted_answers]
-    answer_texts = list(OrderedDict.fromkeys(answer_texts).keys())
+    return list(OrderedDict.fromkeys(answer_texts).keys())
+
+
+def is_ascii_text(text):
+    return isinstance(text, str) and text.isascii()
+
+
+def is_ascii_sample(sample):
+    answer_texts = get_ordered_unique_answer_texts(sample)
+    return (
+        is_ascii_text(sample["doc_question_pairID"])
+        and is_ascii_text(sample["tagName"])
+        and is_ascii_text(sample["document_context"])
+        and all(is_ascii_text(answer) for answer in answer_texts)
+    )
+
+
+def filter_ascii_samples(samples):
+    ascii_samples = []
+    skipped = 0
+    for sample in samples:
+        if is_ascii_sample(sample):
+            ascii_samples.append(sample)
+        else:
+            skipped += 1
+    return ascii_samples, skipped
+
+
+def format_genqa_without_instruction(sample):
+    answer_texts = get_ordered_unique_answer_texts(sample)
 
     return {
         "doc_tag_pairID": sample["doc_question_pairID"],
         "tagName": sample["tagName"],
         "input": sample["document_context"],
-        "output": json.dumps(answer_texts),
+        "output": json.dumps(answer_texts, ensure_ascii=False),
     }
 
 
@@ -342,7 +371,7 @@ def write_jsonl(samples, output_path):
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as fp:
         for sample in samples:
-            fp.write(json.dumps(format_genqa_without_instruction(sample), ensure_ascii=False) + "\n")
+            fp.write(json.dumps(format_genqa_without_instruction(sample), ensure_ascii=True) + "\n")
 
 
 def assert_expected_ne_count(samples):
@@ -372,13 +401,15 @@ def main():
     sys.stdout.flush()
 
     filtered_samples, frequent_ne_types = normalize_and_filter_ne_types(qa_samples, args.min_occurrences)
-    ne_types = assert_expected_ne_count(filtered_samples)
+    ascii_samples, skipped_non_ascii = filter_ascii_samples(filtered_samples)
+    ne_types = assert_expected_ne_count(ascii_samples)
     print(f"NE types with >= {args.min_occurrences} positive spans before normalization: {len(frequent_ne_types)}")
     print(f"Final NE types: {len(ne_types)}")
-    print(f"Final samples: {len(filtered_samples)}")
+    print(f"Skipped non-ASCII samples: {skipped_non_ascii}")
+    print(f"Final samples: {len(ascii_samples)}")
     sys.stdout.flush()
 
-    write_jsonl(filtered_samples, output_path)
+    write_jsonl(ascii_samples, output_path)
     print(f"Wrote {output_path}")
 
 
