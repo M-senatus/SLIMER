@@ -83,7 +83,6 @@ ZERO_SHOT_REMOVED_TAGS = {
     "band",
     "artist",
     "instrument",
-    "musical instrument",
     "music genre",
     "political party",
     "journal",
@@ -95,6 +94,10 @@ ZERO_SHOT_REMOVED_TAGS = {
     "company",
     "legal",
 }
+
+# The historical helper lists both "instrument" and "musical instrument" as
+# removable Music tags, but the checked-in top391NEs_definitions.json retains
+# "musical instrument". Keep this script aligned with that audited 391-NE set.
 
 
 SUPPORTED_SUFFIXES = {".json", ".jsonl", ".parquet"}
