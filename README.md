@@ -132,12 +132,24 @@ python src/data_handlers/build_pileNER_391_plain_genqa.py --overwrite
 from src.data_handlers.hierarchical_guideline_prompt import build_hierarchical_guideline_messages
 ```
 
-交互式批量生成可使用 `src/data_handlers/prompt_gpt_for_guidelines.ipynb`。该 notebook 当前输出六字段 JSON：`entity_type`、`definition`、`include_rules`、`exclude_rules`、`boundary_rules`、`confusable_type_rules`。
+交互式批量生成可使用 `src/data_handlers/prompt_gpt_for_guidelines.ipynb`。该 notebook 调用 OpenAI-compatible GPT API，需先设置 `OPENAI_API_KEY`，默认 `BASE_URL` 为 `https://apix.ai-gaochao.cn/v1`，也可通过 `OPENAI_BASE_URL` 覆盖。notebook 默认读取 `data/pileNER/pileNER_391_3pos_2neg_examples.json`，并把六字段层次化 JSON 写入 `data/pileNER/pileNER_391_hierarchical_guidelines.json`。为控制 API 成本，notebook 默认 `MAX_ENTITY_TYPES = 3`；确认单条测试后再手动改为 `None` 运行完整 391 类。
 
 smoke test 可限制原始样本数并写到临时输出：
 
 ```powershell
 python src/data_handlers/build_pileNER_391_plain_genqa.py --max_raw_samples 20 --output_path data/pileNER/pileNER_391_all.smoke.jsonl --overwrite
+```
+
+从 391 类全集中为每个实体类型抽取 3 个正例和 2 个原文负例：
+
+```powershell
+python src/data_handlers/pileNER/sample_pileNER_391_short_pos_full_neg_examples.py --overwrite
+```
+
+生成每类 5 正 5 负、带层次化 prompt 的 train/dev 微调 JSONL：
+
+```powershell
+python src/data_handlers/pileNER/build_pileNER_391_5pos_5neg_with_guidelines.py --overwrite
 ```
 
 合并 LoRA（运行前先按“注意事项”同步合并脚本中的基础模型）：
@@ -174,7 +186,9 @@ python src/SFT_finetuning/evaluating/evaluate_vLLM.py ..\model\Llama-3.1-8B-Inst
 
 - `data/pileNER/{dataset_name}/`：训练脚本生成的 JSONL 数据。
 - `data/pileNER/pileNER_391_all.jsonl`：无切分 391 类 PileNER JSONL，字段为 `doc_tag_pairID`、`tagName`、`input`、`output`，不包含 `instruction`；生成时会跳过含非 ASCII 字符的样本，保证输出只含英文类字符。
-- `definitions/*_hierarchical_guidelines.json`：`prompt_gpt_for_guidelines.ipynb` 可生成的层次化标注规范 JSON，属于 GPT 生成的实验产物。
+- `data/pileNER/pileNER_391_3pos_2neg_examples.json`：按实体类型分组的示例 JSON；正例优先为含 gold span 的短句，不足时回退到较长含实体句或原始 `input` 全文，负例为原始 `input` 全文；例句字段包含 `sentence`，实体 span 可用 `entities` 或旧字段 `target_words_in_it` 表示。
+- `data/pileNER/pileNER_391_hierarchical_guidelines.json`：`prompt_gpt_for_guidelines.ipynb` 可生成的层次化标注规范 JSON，包含 `entity_type`、`definition`、`include_rules`、`exclude_rules`、`boundary_rules`、`confusable_type_rules` 六字段，属于 GPT 生成的实验产物。
+- `data/pileNER/pileNER_391_5pos_5neg_with_guidelines/`：每类最多 5 正 5 负的 train/dev 微调 JSONL；dev 的 exact `input` 不与 train 已选样本重合，`instruction` 是带 `definition`、`include_rules`、`exclude_rules`、`boundary_rules`、`confusable_type_rules` 的完整抽取 prompt。
 - 所有 `*.jsonl` 文件视为生成数据或实验产物，默认不纳入 git 跟踪；需要共享时应通过外部数据存储或明确约定的发布流程处理。
 - `trained_models/`：LoRA adapter。
 - `merged_models/`：合并后的模型。

@@ -61,10 +61,10 @@ Instructions:
 2. Derive include rules from the positive examples and the entity type semantics.
 3. Derive exclude rules for related, generic, overlapping, or misleading expressions that should not be annotated.
 4. Write boundary rules that specify exactly what words should be included or excluded from the entity span.
-5. Write confusable type rules that distinguish the current type from similar entity types by semantic object, context role, and annotation scope.
+5. Write confusable type rules that distinguish the current type from likely confusable entity types by semantic object, context role, and annotation scope, using only the entity type name and examples as evidence.
 6. Make the rules practical for NER annotation and useful for an LLM performing single-type extraction.
 7. Avoid vague rules such as "annotate relevant entities" unless they are made concrete.
-8. Do not invent dataset-specific labels beyond the given entity type and confusable entity types.
+8. Do not invent dataset-specific labels beyond the given entity type.
 9. Return only a JSON object following the schema below.
 
 Output JSON schema:
@@ -140,8 +140,14 @@ def build_hierarchical_guideline_prompt(
     """Build the target user prompt for one entity type."""
     positive_examples_json = _json_block(normalize_positive_examples(positive_examples))
     negative_examples_json = _json_block(negative_or_boundary_examples or [])
-    confusable_types_json = _json_block(confusable_entity_types or [])
-    hints_text = hints if hints else "None."
+    optional_context = []
+    if confusable_entity_types:
+        optional_context.append(
+            "Confusable entity types:\n" + _json_block(confusable_entity_types)
+        )
+    if hints:
+        optional_context.append("Additional hints:\n" + hints)
+    optional_context_text = "\n\n" + "\n\n".join(optional_context) if optional_context else ""
 
     return f"""We are constructing hierarchical annotation guidelines for a named entity type.
 
@@ -160,17 +166,17 @@ Positive examples:
 {positive_examples_json}
 
 Negative or boundary examples:
-{negative_examples_json}
+{negative_examples_json}{optional_context_text}
 
 Instructions:
 1. Write a concise but specific definition for the entity type.
 2. Derive include rules from the positive examples and the entity type semantics.
 3. Derive exclude rules for related, generic, overlapping, or misleading expressions that should not be annotated.
 4. Write boundary rules that specify exactly what words should be included or excluded from the entity span.
-5. Write confusable type rules that distinguish the current type from similar entity types by semantic object, context role, and annotation scope.
+5. Write confusable type rules that distinguish the current type from likely confusable entity types by semantic object, context role, and annotation scope, using only the entity type name and examples as evidence.
 6. Make the rules practical for NER annotation and useful for an LLM performing single-type extraction.
 7. Avoid vague rules such as "annotate relevant entities" unless they are made concrete.
-8. Do not invent dataset-specific labels beyond the given entity type and confusable entity types.
+8. Do not invent dataset-specific labels beyond the given entity type.
 9. Return only a JSON object following the schema below.
 
 Output JSON schema:

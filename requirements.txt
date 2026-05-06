@@ -5,4 +5,5 @@ vllm
 huggingface-hub
 datasets
 numpy
+openai
 
