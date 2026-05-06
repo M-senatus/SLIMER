@@ -1,0 +1,20 @@
+{
+  "pilener_391_5pos_5neg_guidelines_train": {
+    "file_name": "pileNER/pileNER_391_5pos_5neg_with_guidelines/train.jsonl",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "pilener_391_5pos_5neg_guidelines_dev": {
+    "file_name": "pileNER/pileNER_391_5pos_5neg_with_guidelines/dev.jsonl",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  }
+}

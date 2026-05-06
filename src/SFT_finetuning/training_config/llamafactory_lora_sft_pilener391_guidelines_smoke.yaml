@@ -1,0 +1,54 @@
+### model
+model_name_or_path: ../model/Llama-3.1-8B-Instruct
+
+### method
+stage: sft
+do_train: true
+do_eval: true
+finetuning_type: lora
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target: q_proj,k_proj,v_proj
+
+### dataset
+dataset_dir: data
+dataset: pilener_391_5pos_5neg_guidelines_train
+eval_dataset: pilener_391_5pos_5neg_guidelines_dev
+template: llama3
+cutoff_len: 2048
+max_samples: 64
+train_on_prompt: false
+packing: false
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+### output
+output_dir: trained_models/Llama3_1_8B_pileNER_391_5pos_5neg_guidelines_lora_smoke
+logging_steps: 1
+save_strategy: steps
+save_steps: 5
+save_total_limit: 1
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 16
+learning_rate: 3.0e-4
+num_train_epochs: 10
+max_steps: 5
+lr_scheduler_type: cosine
+warmup_steps: 0
+max_grad_norm: 1.0
+fp16: true
+bf16: false
+gradient_checkpointing: true
+
+### eval
+eval_strategy: steps
+eval_steps: 5
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+greater_is_better: false
